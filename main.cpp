@@ -28,7 +28,7 @@ class TextInput {
         sf::Text input;
         bool active = false;
     public:
-        TextInput(int width, int height, int x, int y) {
+        TextInput(float width, float height, float x, float y) {
             rect.setSize(sf::Vector2f(width, height));
             rect.setOutlineColor(sf::Color(0xD7D6D6));
             rect.setPosition(x, y);
@@ -76,12 +76,96 @@ class TextInput {
             }
             
         }
+
+        std::string getInp() {
+            return input.getString();
+        }
 };
 
+class Button {
+    private:
+        sf::RectangleShape rect;
+        sf::Text text;
+        void (*callback)(std::string, sf::RenderWindow& window);
+    public:
+        Button(float width, float height, float x, float y, std::string t, void (*c)(std::string, sf::RenderWindow& window)) {
+            callback = c;
+
+            rect.setSize(sf::Vector2f(width, height));
+            rect.setOutlineColor(sf::Color(0xD7D6D6));
+            rect.setPosition(x, y);
+
+            text.setFont(montserrat);
+            text.setFillColor(sf::Color::Black);
+            text.setCharacterSize(height - 8);
+            text.setString(t);
+            text.setPosition(x + width / 2 - text.getGlobalBounds().width / 2, y);
+        }
+
+        void checkClicked(sf::RenderWindow& window, std::string inp) {
+            if (rect.getGlobalBounds().contains(window.mapPixelToCoords(sf::Mouse::getPosition(window)))) {
+                rect.setOutlineThickness(10);
+                (*callback)(inp, window);
+            }
+        }
+
+        void checkUnClicked(sf::RenderWindow& window) {
+            rect.setOutlineThickness(0);
+        }
+
+        void draw(sf::RenderWindow& window) {
+            window.draw(rect);
+            window.draw(text);
+        }
+};
+
+std::string current_screen = "menu";
+
+// Network stuff
+sf::TcpSocket client;
+sf::TcpListener listener;
+
+// Menu stuff
 sf::Text title;
 sf::Text ipbox_label;
 TextInput* ipbox;
-std::string current_screen = "menu";
+Button* startBtn;
+
+
+void start(std::string text, sf::RenderWindow& window) {
+    window.clear();
+
+    sf::Text message;
+    message.setString("Connecting...");
+    message.setFont(montserrat);
+    message.setFillColor(sf::Color::White);
+    message.setCharacterSize(120);
+    message.setPosition(WIDTH / 2 - message.getLocalBounds().width / 2, HEIGHT / 2 - message.getLocalBounds().height / 2);
+
+    window.draw(message);
+    window.display();
+    if (text == "") {
+        // Wants to be host
+        if (listener.listen(53000) != sf::Socket::Done) {
+            std::cout << "Starting server error\n";
+        }
+        
+        if (listener.accept(client) != sf::Socket::Done) {
+            std::cout << "Client joining error\n";
+        }
+
+        // We have connected
+    }
+    else {
+        // Wants to be a client
+        sf::Socket::Status status = client.connect("127.0.0.1", 53000);
+        if (status != sf::Socket::Done) {
+            std::cout << "Connection error\n";
+        }
+    }
+
+    current_screen = "game";
+}
 
 void setupItems() {
     montserrat.loadFromFile("montserrat.ttf");
@@ -99,6 +183,8 @@ void setupItems() {
     ipbox_label.setFillColor(sf::Color::White);
     ipbox_label.setCharacterSize(50);
     ipbox_label.setPosition(WIDTH / 2 - 320 / 2, 225);
+
+    startBtn = new Button(320, 50, WIDTH / 2 - 320 / 2, 400, "Start", start);
 }
 
 void updateMenu(sf::RenderWindow& window) {
@@ -107,6 +193,11 @@ void updateMenu(sf::RenderWindow& window) {
     window.draw(title);
     ipbox->draw(window);
     window.draw(ipbox_label);
+    startBtn->draw(window);
+}
+
+void updateGame(sf::RenderWindow& window) {
+    window.clear();
 }
 
 int main() {
@@ -123,6 +214,11 @@ int main() {
 
             if (event.type == sf::Event::MouseButtonPressed) {
                 ipbox->checkClicked(window);
+                startBtn->checkClicked(window, ipbox->getInp());
+            }
+
+            if (event.type == sf::Event::MouseButtonReleased) {
+                startBtn->checkUnClicked(window);
             }
 
             if (event.type == sf::Event::KeyPressed) {
@@ -132,6 +228,9 @@ int main() {
 
         if (current_screen == "menu") {
             updateMenu(window);
+        }
+        else {
+            updateGame(window);
         }
 
         window.display();
