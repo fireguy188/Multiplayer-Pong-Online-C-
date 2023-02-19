@@ -8,7 +8,7 @@ const int WIDTH = 1000;
 
 const int PLAYER_HEIGHT = 80;
 const int PLAYER_WIDTH = 10;
-const float PADDLE_SPEED = 0.5;
+const float PADDLE_SPEED = 1;
 
 const int BALL_SIZE = 20;
 
@@ -122,6 +122,8 @@ class Button {
 
 std::string current_screen = "menu";
 int player;
+int p1points = 0;
+int p2points = 0;
 
 // Network stuff
 sf::TcpSocket client;
@@ -219,12 +221,44 @@ void updateMenu(sf::RenderWindow& window) {
     startBtn->draw(window);
 }
 
+void resetGame() {
+    p1pos = HEIGHT / 2;
+    p2pos = HEIGHT / 2;
+
+    ballx = WIDTH / 2;
+    bally = HEIGHT / 2;
+
+    ballxvel = 0.2;
+    ballyvel = 0.1;
+}
+
 void updateGame(sf::RenderWindow& window) {
     window.clear();
 
+    ballx += ballxvel;
+    bally += ballyvel;
+
+    if (ballx >= WIDTH - 10 - PLAYER_WIDTH - BALL_SIZE && ballx <= WIDTH - 10 && bally <= p2pos + PLAYER_HEIGHT / 2 && bally >= p2pos - PLAYER_HEIGHT / 2) {
+        ballxvel *= -1.01;
+    }
+    if (ballx >= 10 && ballx <= PLAYER_WIDTH + 10 && bally <= p1pos + PLAYER_HEIGHT / 2 && bally >= p1pos - PLAYER_HEIGHT / 2) {
+        ballxvel *= -1.01;
+    }
+    if (bally >= HEIGHT || bally <= 0) {
+        ballyvel *= -1;
+    }
+
+    if (ballx >= WIDTH) {
+        p1points++;
+        resetGame();
+    } else if (ballx <= 0) {
+        p2points++;
+        resetGame();
+    }
+
     p1paddle.setPosition(sf::Vector2f(10, p1pos));
     p2paddle.setPosition(sf::Vector2f(WIDTH - 10 - PLAYER_WIDTH, p2pos));
-    ball.setPosition(sf::Vector2f(WIDTH / 2 - BALL_SIZE / 2, HEIGHT / 2 - BALL_SIZE / 2));
+    ball.setPosition(sf::Vector2f(ballx, bally));
 
     window.draw(p1paddle);
     window.draw(p2paddle);
@@ -297,19 +331,27 @@ int main() {
             if (window.hasFocus()) {
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
                     if (player == 1) {
-                        p1pos -= PADDLE_SPEED;
+                        if (p1pos > 0) {
+                            p1pos -= PADDLE_SPEED;
+                        }
                     }
                     else if (player == 2) {
-                        p2pos -= PADDLE_SPEED;
+                        if (p2pos > 0) {
+                            p2pos -= PADDLE_SPEED;
+                        }
                     }
                     sendUpdate();
                 }
                 else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
                     if (player == 1) {
-                        p1pos += PADDLE_SPEED;
+                        if (p1pos + PLAYER_HEIGHT < HEIGHT) {
+                            p1pos += PADDLE_SPEED;
+                        }
                     }
                     else if (player == 2) {
-                        p2pos += PADDLE_SPEED;
+                        if (p2pos + PLAYER_HEIGHT < HEIGHT) {
+                            p2pos += PADDLE_SPEED;
+                        }
                     }
                     sendUpdate();
                 }
