@@ -8,17 +8,18 @@ const int WIDTH = 1000;
 
 const int PLAYER_HEIGHT = 80;
 const int PLAYER_WIDTH = 10;
+const float PADDLE_SPEED = 0.5;
 
 const int BALL_SIZE = 20;
 
-int p1pos = HEIGHT / 2;
-int p2pos = HEIGHT / 2;
+double p1pos = HEIGHT / 2;
+double p2pos = HEIGHT / 2;
 
-float ballx = WIDTH / 2;
-float bally = HEIGHT / 2;
+double ballx = WIDTH / 2;
+double bally = HEIGHT / 2;
 
-float ballxvel = 0.2;
-float ballyvel = 0.1;
+double ballxvel = 0.2;
+double ballyvel = 0.1;
 
 sf::Font montserrat;
 
@@ -120,6 +121,7 @@ class Button {
 };
 
 std::string current_screen = "menu";
+int player;
 
 // Network stuff
 sf::TcpSocket client;
@@ -130,6 +132,11 @@ sf::Text title;
 sf::Text ipbox_label;
 TextInput* ipbox;
 Button* startBtn;
+
+// Game stuff
+sf::RectangleShape p1paddle;
+sf::RectangleShape p2paddle;
+sf::RectangleShape ball;
 
 
 void start(std::string text, sf::RenderWindow& window) {
@@ -154,7 +161,7 @@ void start(std::string text, sf::RenderWindow& window) {
             std::cout << "Client joining error\n";
         }
 
-        // We have connected
+        player = 1;
     }
     else {
         // Wants to be a client
@@ -162,6 +169,8 @@ void start(std::string text, sf::RenderWindow& window) {
         if (status != sf::Socket::Done) {
             std::cout << "Connection error\n";
         }
+
+        player = 2;
     }
 
     current_screen = "game";
@@ -185,6 +194,18 @@ void setupItems() {
     ipbox_label.setPosition(WIDTH / 2 - 320 / 2, 225);
 
     startBtn = new Button(320, 50, WIDTH / 2 - 320 / 2, 400, "Start", start);
+
+    p1paddle.setFillColor(sf::Color::White);
+    p1paddle.setSize(sf::Vector2f(PLAYER_WIDTH, PLAYER_HEIGHT));
+    p1paddle.setPosition(sf::Vector2f(10, p1pos));
+
+    p2paddle.setFillColor(sf::Color::White);
+    p2paddle.setSize(sf::Vector2f(PLAYER_WIDTH, PLAYER_HEIGHT));
+    p2paddle.setPosition(sf::Vector2f(WIDTH - 10 - PLAYER_WIDTH, p2pos));
+
+    ball.setFillColor(sf::Color::White);
+    ball.setSize(sf::Vector2f(BALL_SIZE, BALL_SIZE));
+    ball.setPosition(sf::Vector2f(WIDTH / 2 - BALL_SIZE / 2, HEIGHT / 2 - BALL_SIZE / 2));
 }
 
 void updateMenu(sf::RenderWindow& window) {
@@ -198,6 +219,14 @@ void updateMenu(sf::RenderWindow& window) {
 
 void updateGame(sf::RenderWindow& window) {
     window.clear();
+
+    p1paddle.setPosition(sf::Vector2f(10, p1pos));
+    p2paddle.setPosition(sf::Vector2f(WIDTH - 10 - PLAYER_WIDTH, p2pos));
+    ball.setPosition(sf::Vector2f(WIDTH / 2 - BALL_SIZE / 2, HEIGHT / 2 - BALL_SIZE / 2));
+
+    window.draw(p1paddle);
+    window.draw(p2paddle);
+    window.draw(ball);
 }
 
 int main() {
@@ -213,24 +242,49 @@ int main() {
             }
 
             if (event.type == sf::Event::MouseButtonPressed) {
-                ipbox->checkClicked(window);
-                startBtn->checkClicked(window, ipbox->getInp());
+                if (current_screen == "menu") {
+                    ipbox->checkClicked(window);
+                    startBtn->checkClicked(window, ipbox->getInp());
+                }
             }
 
             if (event.type == sf::Event::MouseButtonReleased) {
-                startBtn->checkUnClicked(window);
+                if (current_screen == "menu") {
+                    startBtn->checkUnClicked(window);
+                }
             }
 
             if (event.type == sf::Event::KeyPressed) {
-                ipbox->enterText(event.key.code);
+                if (current_screen == "menu") {
+                    ipbox->enterText(event.key.code);
+                }
             }
         }
 
         if (current_screen == "menu") {
             updateMenu(window);
         }
-        else {
+        else if (current_screen == "game") {
             updateGame(window);
+
+            if (window.hasFocus()) {
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+                    if (player == 1) {
+                        p1pos -= PADDLE_SPEED;
+                    }
+                    else if (player == 2) {
+                        p2pos -= PADDLE_SPEED;
+                    }
+                }
+                else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+                    if (player == 1) {
+                        p1pos += PADDLE_SPEED;
+                    }
+                    else if (player == 2) {
+                        p2pos += PADDLE_SPEED;
+                    }
+                }
+            }
         }
 
         window.display();
