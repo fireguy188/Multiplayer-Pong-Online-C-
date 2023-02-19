@@ -139,6 +139,8 @@ Button* startBtn;
 sf::RectangleShape p1paddle;
 sf::RectangleShape p2paddle;
 sf::RectangleShape ball;
+sf::Text p1scoredisplay;
+sf::Text p2scoredisplay;
 
 
 void start(std::string text, sf::RenderWindow& window) {
@@ -210,6 +212,16 @@ void setupItems() {
     ball.setPosition(sf::Vector2f(WIDTH / 2 - BALL_SIZE / 2, HEIGHT / 2 - BALL_SIZE / 2));
 
     client.setBlocking(false);
+
+    p1scoredisplay.setString("0");
+    p1scoredisplay.setFont(montserrat);
+    p1scoredisplay.setFillColor(sf::Color::White);
+    p1scoredisplay.setCharacterSize(90);
+
+    p2scoredisplay.setString("0");
+    p2scoredisplay.setFont(montserrat);
+    p2scoredisplay.setFillColor(sf::Color::White);
+    p2scoredisplay.setCharacterSize(90);
 }
 
 void updateMenu(sf::RenderWindow& window) {
@@ -250,9 +262,11 @@ void updateGame(sf::RenderWindow& window) {
 
     if (ballx >= WIDTH) {
         p1points++;
+        p1scoredisplay.setString(std::to_string(p1points));
         resetGame();
     } else if (ballx <= 0) {
         p2points++;
+        p2scoredisplay.setString(std::to_string(p2points));
         resetGame();
     }
 
@@ -263,6 +277,11 @@ void updateGame(sf::RenderWindow& window) {
     window.draw(p1paddle);
     window.draw(p2paddle);
     window.draw(ball);
+
+    p1scoredisplay.setPosition(WIDTH / 4 - p1scoredisplay.getGlobalBounds().width / 2, 20);
+    p2scoredisplay.setPosition(3 * WIDTH / 4 - p1scoredisplay.getGlobalBounds().width / 2, 20);
+    window.draw(p1scoredisplay);
+    window.draw(p2scoredisplay);
 }
 
 void sendUpdate() {
