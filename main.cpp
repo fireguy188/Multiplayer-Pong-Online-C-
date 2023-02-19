@@ -155,29 +155,34 @@ void start(std::string text, sf::RenderWindow& window) {
 
     window.draw(message);
     window.display();
+
+    current_screen = "game";
     if (text == "") {
         // Wants to be host
         if (listener.listen(53000) != sf::Socket::Done) {
             std::cout << "Starting server error\n";
+            current_screen = "menu";
         }
         
         if (listener.accept(client) != sf::Socket::Done) {
             std::cout << "Client joining error\n";
+            current_screen = "menu";
         }
 
         player = 1;
     }
     else {
         // Wants to be a client
+        client.setBlocking(true);
         sf::Socket::Status status = client.connect(text, 53000);
         if (status != sf::Socket::Done) {
             std::cout << "Connection error\n";
+            current_screen = "menu";
         }
+        client.setBlocking(false);
 
         player = 2;
     }
-
-    current_screen = "game";
 }
 
 void setupItems() {
