@@ -6,8 +6,8 @@
 const int HEIGHT = 600;
 const int WIDTH = 1000;
 
-const int PLAYER_HEIGHT = 80;
-const int PLAYER_WIDTH = 10;
+const int PLAYER_HEIGHT = 100;
+const int PLAYER_WIDTH = 30;
 const float PADDLE_SPEED = 1;
 
 const int BALL_SIZE = 20;
@@ -18,8 +18,8 @@ double p2pos = HEIGHT / 2;
 double ballx = WIDTH / 2;
 double bally = HEIGHT / 2;
 
-double ballxvel = 0.2;
-double ballyvel = 0.1;
+double ballxvel = 0.5;
+double ballyvel = 0.2;
 
 sf::Font montserrat;
 
@@ -89,7 +89,7 @@ class Button {
         sf::Text text;
         void (*callback)(std::string, sf::RenderWindow& window);
     public:
-        Button(float width, float height, float x, float y, std::string t, void (*c)(std::string, sf::RenderWindow& window)) {
+        Button(double width, double height, double x, double y, std::string t, void (*c)(std::string, sf::RenderWindow& window)) {
             callback = c;
 
             rect.setSize(sf::Vector2f(width, height));
@@ -169,7 +169,7 @@ void start(std::string text, sf::RenderWindow& window) {
     }
     else {
         // Wants to be a client
-        sf::Socket::Status status = client.connect("127.0.0.1", 53000);
+        sf::Socket::Status status = client.connect(text, 53000);
         if (status != sf::Socket::Done) {
             std::cout << "Connection error\n";
         }
@@ -240,25 +240,25 @@ void resetGame() {
     ballx = WIDTH / 2;
     bally = HEIGHT / 2;
 
-    ballxvel = 0.2;
-    ballyvel = 0.1;
+    ballxvel = 0.5;
+    ballyvel = 0.2;
 }
 
 void updateGame(sf::RenderWindow& window) {
     window.clear();
 
-    ballx += ballxvel;
-    bally += ballyvel;
-
-    if (ballx >= WIDTH - 10 - PLAYER_WIDTH - BALL_SIZE && ballx <= WIDTH - 10 && bally <= p2pos + PLAYER_HEIGHT / 2 && bally >= p2pos - PLAYER_HEIGHT / 2) {
+    if (ballx >= WIDTH - 10 - PLAYER_WIDTH - BALL_SIZE && ballx <= WIDTH - 10 && bally <= p2pos + PLAYER_HEIGHT && bally >= p2pos) {
         ballxvel *= -1.01;
     }
-    if (ballx >= 10 && ballx <= PLAYER_WIDTH + 10 && bally <= p1pos + PLAYER_HEIGHT / 2 && bally >= p1pos - PLAYER_HEIGHT / 2) {
+    if (ballx >= 10 && ballx <= PLAYER_WIDTH + 10 && bally <= p1pos + PLAYER_HEIGHT && bally >= p1pos) {
         ballxvel *= -1.01;
     }
     if (bally >= HEIGHT || bally <= 0) {
         ballyvel *= -1;
     }
+
+    ballx += ballxvel;
+    bally += ballyvel;
 
     if (ballx >= WIDTH) {
         p1points++;
