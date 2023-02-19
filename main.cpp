@@ -274,6 +274,9 @@ void sendUpdate() {
         packet << p2pos;
     }
 
+    packet << ballx;
+    packet << bally;
+
     client.send(packet);
 }
 
@@ -284,9 +287,9 @@ void receiveUpdate() {
     }
 
     if (player == 1) {
-        packet >> p2pos;
+        packet >> p2pos >> ballx >> bally;
     } else if (player == 2) {
-        packet >> p1pos;
+        packet >> p1pos >> ballx >> bally;
     }
 }
 
