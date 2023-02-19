@@ -206,6 +206,8 @@ void setupItems() {
     ball.setFillColor(sf::Color::White);
     ball.setSize(sf::Vector2f(BALL_SIZE, BALL_SIZE));
     ball.setPosition(sf::Vector2f(WIDTH / 2 - BALL_SIZE / 2, HEIGHT / 2 - BALL_SIZE / 2));
+
+    client.setBlocking(false);
 }
 
 void updateMenu(sf::RenderWindow& window) {
@@ -227,6 +229,31 @@ void updateGame(sf::RenderWindow& window) {
     window.draw(p1paddle);
     window.draw(p2paddle);
     window.draw(ball);
+}
+
+void sendUpdate() {
+    sf::Packet packet;
+
+    if (player == 1) {
+        packet << p1pos;
+    } else if (player == 2) {
+        packet << p2pos;
+    }
+
+    client.send(packet);
+}
+
+void receiveUpdate() {
+    sf::Packet packet;
+    if (client.receive(packet) == sf::Socket::NotReady) {
+        return;
+    }
+
+    if (player == 1) {
+        packet >> p2pos;
+    } else if (player == 2) {
+        packet >> p1pos;
+    }
 }
 
 int main() {
@@ -263,8 +290,8 @@ int main() {
 
         if (current_screen == "menu") {
             updateMenu(window);
-        }
-        else if (current_screen == "game") {
+        } else if (current_screen == "game") {
+            receiveUpdate();
             updateGame(window);
 
             if (window.hasFocus()) {
@@ -275,6 +302,7 @@ int main() {
                     else if (player == 2) {
                         p2pos -= PADDLE_SPEED;
                     }
+                    sendUpdate();
                 }
                 else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
                     if (player == 1) {
@@ -283,6 +311,7 @@ int main() {
                     else if (player == 2) {
                         p2pos += PADDLE_SPEED;
                     }
+                    sendUpdate();
                 }
             }
         }
